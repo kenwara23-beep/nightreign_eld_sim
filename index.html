@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NR Relic Simulator v9.0</title>
+    <title>NR Relic Simulator v9.1</title>
     <style>
         :root { --bg: #0f1115; --card: #1a1d23; --accent: #d4af37; --text: #e0e0e0; --hp: #ff4f4f; --atk: #4fafff; --element: #4fff8d; }
         body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; font-size: 14px; }
@@ -11,28 +11,27 @@
         .section { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #333; }
         .label { font-weight: bold; color: var(--accent); margin-bottom: 10px; display: block; border-left: 4px solid var(--accent); padding-left: 10px; }
         
-        /* 入力エリア */
         .base-input-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .base-input-grid div { display: flex; flex-direction: column; }
         .base-input-grid label { font-size: 0.7rem; color: #888; margin-bottom: 3px; }
         input[type="number"] { background: #12151a; color: white; border: 1px solid #555; padding: 8px; border-radius: 5px; }
 
         .slot { background: #252a33; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #444; }
-        select { width: 100%; padding: 8px; background: #12151a; color: white; border: 1px solid #555; border-radius: 5px; }
+        select { width: 100%; padding: 10px; background: #12151a; color: white; border: 1px solid #555; border-radius: 5px; cursor: pointer; }
         
-        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 17, 21, 0.98); border-top: 3px solid var(--accent); padding: 15px; backdrop-filter: blur(10px); }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 17, 21, 0.98); border-top: 3px solid var(--accent); padding: 15px; backdrop-filter: blur(10px); z-index: 100; }
         .result-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .res-box { text-align: center; }
         .res-val { font-size: 1.4rem; font-weight: bold; }
         .res-base { font-size: 0.7rem; color: #777; }
-        .formula { font-size: 0.6rem; color: #666; margin-top: 5px; overflow-wrap: break-word; }
+        .formula { font-size: 0.6rem; color: #666; margin-top: 10px; border-top: 1px solid #333; padding-top: 5px; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="section">
-        <span class="label">基礎ステータス設定</span>
+        <span class="label">基礎ステータス設定 ⚙️</span>
         <div class="base-input-grid">
             <div><label>基礎HP</label><input type="number" id="base-hp" value="1000" oninput="calc()"></div>
             <div><label>物理攻撃</label><input type="number" id="base-atk" value="300" oninput="calc()"></div>
@@ -41,20 +40,20 @@
     </div>
 
     <div class="section">
-        <span class="label">フィールドバフ (最大10)</span>
+        <span class="label">撃破数ボーナス 🏹 (最大10)</span>
         <div style="display:flex; gap:10px;">
-            <div style="flex:1;"><label style="font-size:0.7rem;">封牢(1.05)</label><input type="number" id="jail" value="0" min="0" max="10" style="width:100%" oninput="calc()"></div>
-            <div style="flex:1;"><label style="font-size:0.7rem;">侵入(1.07)</label><input type="number" id="invader" value="0" min="0" max="10" style="width:100%" oninput="calc()"></div>
+            <div style="flex:1;"><label style="font-size:0.7rem;">封牢の囚 (1.05倍)</label><input type="number" id="jail" value="0" min="0" max="10" style="width:100%" oninput="calc()"></div>
+            <div style="flex:1;"><label style="font-size:0.7rem;">夜の侵入者 (1.07倍)</label><input type="number" id="invader" value="0" min="0" max="10" style="width:100%" oninput="calc()"></div>
         </div>
     </div>
 
     <div class="section">
-        <span class="label">通常遺物 (3枠)</span>
+        <span class="label">通常遺物スロット (3枠) 🛡️</span>
         <div id="n-slots"></div>
     </div>
 
     <div class="section">
-        <span class="label" style="color:#b19cd9; border-color:#b19cd9;">深層遺物 (3枠)</span>
+        <span class="label" style="color:#b19cd9; border-color:#b19cd9;">深層遺物スロット (3枠) 🌀</span>
         <div id="d-slots"></div>
     </div>
 </div>
@@ -62,71 +61,119 @@
 <div class="footer">
     <div class="result-grid">
         <div class="res-box">
-            <div style="color:var(--hp); font-size:0.7rem;">最終HP</div>
+            <div style="color:var(--hp); font-size:0.7rem;">最終HP ❤️</div>
             <div id="hp-val" class="res-val" style="color:var(--hp)">-</div>
             <div id="hp-base" class="res-base"></div>
         </div>
         <div class="res-box">
-            <div style="color:var(--atk); font-size:0.7rem;">物理攻撃</div>
+            <div style="color:var(--atk); font-size:0.7rem;">物理攻撃 ⚔️</div>
             <div id="atk-val" class="res-val" style="color:var(--atk)">-</div>
             <div id="atk-base" class="res-base"></div>
         </div>
         <div class="res-box">
-            <div style="color:var(--element); font-size:0.7rem;">属性攻撃</div>
+            <div style="color:var(--element); font-size:0.7rem;">属性攻撃 ✨</div>
             <div id="ele-val" class="res-val" style="color:var(--element)">-</div>
             <div id="ele-base" class="res-base"></div>
         </div>
     </div>
-    <div id="formula-area" class="formula" style="text-align:center; margin-top:10px; border-top:1px solid #333; padding-top:5px;"></div>
+    <div id="formula-area" class="formula"></div>
 </div>
 
 <script>
-// 重ね掛け(s)がtrueなら全て乗算。falseなら同名内で最大値のみ。
+// 遺物データ (s: 重ね掛け◯=true, ✕=false / t: 種類 / b: デメリット)
 const DATA = [
-    { n: "物理攻撃力上昇+4", m: 1.12, s: true, t: "atk" },
-    { n: "物理攻撃力上昇+3", m: 1.105, s: true, t: "atk" },
-    { n: "属性攻撃力上昇+4", m: 1.12, s: true, t: "ele" },
-    { n: "属性攻撃力上昇+3", m: 1.105, s: true, t: "ele" },
-    { n: "最大HP上昇(通常)", m: 1.1, f: 100, s: false, t: "hp" },
-    { n: "生命力+3", f: 60, s: true, t: "hp" },
-    { n: "生命力+2", f: 40, s: true, t: "hp" },
-    { n: "生命力+1", f: 20, s: true, t: "hp" },
-    { n: "執行者:攻撃上昇", m: 1.35, s: true, t: "atk" },
-    { n: "深層:物理攻撃+4", m: 1.12, b: 0.9, s: true, t: "atk" }, // デメリットbはHPにかかる
-    { n: "深層:属性攻撃+4", m: 1.12, b: 0.9, s: true, t: "ele" },
-    { n: "大教会:HP上昇", m: 1.05, s: false, t: "hp" }
+    { n: "物理攻撃力上昇+4 (◯)", m: 1.12, s: true, t: "atk" },
+    { n: "物理攻撃力上昇+3 (◯)", m: 1.105, s: true, t: "atk" },
+    { n: "属性攻撃力上昇+4 (◯)", m: 1.12, s: true, t: "ele" },
+    { n: "属性攻撃力上昇+3 (◯)", m: 1.105, s: true, t: "ele" },
+    { n: "最大HP上昇 (✕)", m: 1.1, f: 100, s: false, t: "hp" },
+    { n: "生命力+3 (◯)", f: 60, s: true, t: "hp" },
+    { n: "生命力+2 (◯)", f: 40, s: true, t: "hp" },
+    { n: "生命力+1 (◯)", f: 20, s: true, t: "hp" },
+    { n: "執行者:攻撃上昇 (◯)", m: 1.35, s: true, t: "atk" },
+    { n: "深層:物理攻撃+4 (◯)", m: 1.12, b: 0.9, s: true, t: "atk" },
+    { n: "深層:属性攻撃+4 (◯)", m: 1.12, b: 0.9, s: true, t: "ele" },
+    { n: "大教会:HP上昇 (✕)", m: 1.05, s: false, t: "hp" }
 ];
 
-function createSlots(id) {
-    const target = document.getElementById(id);
-    for(let i=0; i<3; i++) {
+function createSlots(containerId) {
+    const container = document.getElementById(containerId);
+    for (let i = 0; i < 3; i++) {
         const div = document.createElement('div');
         div.className = 'slot';
-        const sel = document.createElement('select');
-        sel.className = 'relic-sel';
-        sel.innerHTML = '<option value="">--- 未装備 ---</option>';
-        DATA.forEach(d => sel.add(new Option(d.n, JSON.stringify(d))));
-        sel.onchange = calc;
-        div.appendChild(sel);
-        target.appendChild(div);
+        const select = document.createElement('select');
+        select.className = 'relic-select';
+        
+        let options = '<option value="">--- 未装備 ---</option>';
+        DATA.forEach((item, index) => {
+            // 文字列化してvalueに格納
+            const val = JSON.stringify(item);
+            options += `<option value='${val}'>${item.n}</option>`;
+        });
+        
+        select.innerHTML = options;
+        select.onchange = calc;
+        div.appendChild(select);
+        container.appendChild(div);
     }
 }
 
 function calc() {
-    const bHP = parseFloat(document.getElementById('base-hp').value) || 0;
-    const bAtk = parseFloat(document.getElementById('base-atk').value) || 0;
-    const bEle = parseFloat(document.getElementById('base-ele').value) || 0;
+    const baseHP = parseFloat(document.getElementById('base-hp').value) || 0;
+    const baseAtk = parseFloat(document.getElementById('base-atk').value) || 0;
+    const baseEle = parseFloat(document.getElementById('base-ele').value) || 0;
 
-    let aMult = 1.0, eMult = 1.0, hMult = 1.0, hFix = 0;
-    const used = new Set();
+    let atkMult = 1.0;
+    let eleMult = 1.0;
+    let hpMult = 1.0;
+    let hpFixed = 0;
+    
+    const usedNonStackable = new Set();
 
-    document.querySelectorAll('.relic-sel').forEach(sel => {
-        if(!sel.value) return;
-        const d = JSON.parse(sel.value);
-        if(!d.s && used.has(d.n)) return; 
-        if(!d.s) used.add(d.n);
+    document.querySelectorAll('.relic-select').forEach(sel => {
+        if (!sel.value) return;
+        const relic = JSON.parse(sel.value);
 
-        if(d.t === 'atk') aMult *= d.m;
-        if(d.t === 'ele') eMult *= d.m;
-        if(d.t === 'hp') { if(d.m) hMult *= d.m; if(d.f) hFix += d.f; }
-        if(d.b) hMult *= d.b; // 深
+        // 重複不可(✕)の処理
+        if (!relic.s) {
+            if (usedNonStackable.has(relic.n)) return;
+            usedNonStackable.add(relic.n);
+        }
+
+        if (relic.t === 'atk') atkMult *= relic.m;
+        if (relic.t === 'ele') eleMult *= relic.m;
+        if (relic.t === 'hp') {
+            if (relic.m) hpMult *= relic.m;
+            if (relic.f) hpFixed += relic.f;
+        }
+        // 深層デメリット (HP減少)
+        if (relic.b) hpMult *= relic.b;
+    });
+
+    const jails = parseInt(document.getElementById('jail').value) || 0;
+    const invaders = parseInt(document.getElementById('invader').value) || 0;
+    const fieldBonus = Math.pow(1.05, jails) * Math.pow(1.07, invaders);
+
+    const finalHP = Math.floor(baseHP * hpMult) + hpFixed;
+    const finalAtk = Math.floor(baseAtk * atkMult * fieldBonus);
+    const finalEle = Math.floor(baseEle * eleMult * fieldBonus);
+
+    document.getElementById('hp-val').innerText = finalHP;
+    document.getElementById('hp-base').innerText = "元:" + baseHP;
+    document.getElementById('atk-val').innerText = finalAtk;
+    document.getElementById('atk-base').innerText = "元:" + baseAtk;
+    document.getElementById('ele-val').innerText = finalEle;
+    document.getElementById('ele-base').innerText = "元:" + baseEle;
+
+    document.getElementById('formula-area').innerText = 
+        `物理倍率: x${(atkMult * fieldBonus).toFixed(3)} / 属性倍率: x${(eleMult * fieldBonus).toFixed(3)} / HP倍率: x${hpMult.toFixed(2)}`;
+}
+
+// 初期化
+createSlots('n-slots');
+createSlots('d-slots');
+calc();
+</script>
+
+</body>
+</html>
