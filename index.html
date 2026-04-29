@@ -3,37 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NR Relic Simulator v12.1</title>
+    <title>NR Relic Simulator v12.2</title>
     <style>
         :root { --bg: #0f1115; --card: #1a1d23; --accent: #d4af37; --text: #e0e0e0; --hp: #ff4f4f; --atk: #4fafff; --element: #4fff8d; }
         body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; font-size: 14px; }
-        .container { max-width: 600px; margin: 0 auto; padding-bottom: 300px; }
-        .section { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #333; }
+        .container { max-width: 600px; margin: 0 auto; padding-bottom: 280px; }
+        .section { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid #333; }
         .label { font-weight: bold; color: var(--accent); margin-bottom: 10px; display: block; border-left: 4px solid var(--accent); padding-left: 10px; }
         
         .base-input-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         .base-input-grid div { display: flex; flex-direction: column; }
         input[type="number"] { background: #12151a; color: white; border: 1px solid #555; padding: 8px; border-radius: 5px; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
 
-        .slot { background: #252a33; padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #444; }
+        .slot { background: #252a33; padding: 6px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #444; }
         select { width: 100%; padding: 10px; background: #12151a; color: white; border: 1px solid #555; border-radius: 5px; cursor: pointer; font-size: 0.9rem; }
         
-        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(20, 23, 28, 0.95); border-top: 2px solid var(--accent); padding: 10px; z-index: 100; box-shadow: 0 -5px 15px rgba(0,0,0,0.5); }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(20, 23, 28, 0.98); border-top: 2px solid var(--accent); padding: 10px; z-index: 100; box-shadow: 0 -5px 15px rgba(0,0,0,0.5); }
         
-        .result-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 8px; }
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 6px; }
         .res-box { text-align: center; border-right: 1px solid #333; padding: 2px; }
         .res-box:last-child { border-right: none; }
         .res-val { font-size: 1.1rem; font-weight: bold; display: block; }
-        .res-pct { font-size: 0.75rem; color: var(--accent); display: block; }
+        .res-pct { font-size: 0.75rem; color: var(--accent); display: block; font-weight: bold; }
         .res-base { font-size: 0.6rem; color: #777; display: block; }
 
-        .formula-list { background: rgba(0,0,0,0.4); border-radius: 6px; padding: 8px; font-size: 0.65rem; }
-        .formula-item { white-space: nowrap; overflow-x: auto; border-bottom: 1px solid #222; padding: 4px 0; display: flex; align-items: center; }
-        .formula-item span { color: var(--accent); margin-left: 5px; }
+        .formula-list { background: rgba(0,0,0,0.5); border-radius: 6px; padding: 6px; font-size: 0.65rem; color: #aaa; }
+        .formula-item { white-space: nowrap; overflow-x: auto; border-bottom: 1px solid #222; padding: 4px 0; -webkit-overflow-scrolling: touch; }
+        .formula-item span { color: var(--accent); margin-left: 4px; font-weight: bold; }
 
         @media (max-width: 480px) {
             .res-val { font-size: 1rem; }
             .res-pct { font-size: 0.7rem; }
+            .container { padding-bottom: 300px; }
         }
     </style>
 </head>
@@ -64,19 +65,19 @@
 <div class="footer">
     <div class="result-grid">
         <div class="res-box">
-            <span style="color:var(--hp); font-size:0.6rem;">HP ❤️</span>
+            <span style="color:var(--hp); font-size:0.65rem;">HP ❤️</span>
             <span id="hp-val" class="res-val" style="color:var(--hp)">-</span>
             <span id="hp-pct" class="res-pct">100%</span>
             <span id="hp-base" class="res-base"></span>
         </div>
         <div class="res-box">
-            <span style="color:var(--atk); font-size:0.6rem;">物理 ⚔️</span>
+            <span style="color:var(--atk); font-size:0.65rem;">物理 ⚔️</span>
             <span id="atk-val" class="res-val" style="color:var(--atk)">-</span>
             <span id="atk-pct" class="res-pct">100%</span>
             <span id="atk-base" class="res-base"></span>
         </div>
         <div class="res-box">
-            <span style="color:var(--element); font-size:0.6rem;">属性 ✨</span>
+            <span style="color:var(--element); font-size:0.65rem;">属性 ✨</span>
             <span id="ele-val" class="res-val" style="color:var(--element)">-</span>
             <span id="ele-pct" class="res-pct">100%</span>
             <span id="ele-base" class="res-base"></span>
@@ -113,12 +114,13 @@ const DATA = [
 
 function createSlots(id) {
     const target = document.getElementById(id);
+    if (!target) return;
     for (let i = 0; i < 3; i++) {
         const sel = document.createElement('select');
         sel.className = 'relic-select';
-        let options = '<option value="">--- 未装備 ---</option>';
-        DATA.forEach(d => { options += `<option value='${JSON.stringify(d)}'>${d.n}</option>`; });
-        sel.innerHTML = options;
+        let opt = '<option value="">--- 未装備 ---</option>';
+        DATA.forEach(d => { opt += `<option value='${JSON.stringify(d)}'>${d.n}</option>`; });
+        sel.innerHTML = opt;
         sel.onchange = calc;
         const div = document.createElement('div');
         div.className = 'slot';
@@ -132,8 +134,8 @@ function calc() {
     const bAtk = parseFloat(document.getElementById('base-atk').value) || 0;
     const bEle = parseFloat(document.getElementById('base-ele').value) || 0;
 
-    let aMult = 1.0, eMult = 1.0, hMult = 1.0, hFix = 0;
-    let aF = [bAtk], eF = [bEle], hF = [bHP];
+    let aM = 1.0, eM = 1.0, hM = 1.0, hFix = 0;
+    let aLog = [bAtk], eLog = [bEle], hLog = [bHP];
     const used = new Set();
 
     document.querySelectorAll('.relic-select').forEach(sel => {
@@ -142,16 +144,45 @@ function calc() {
         if (!d.s && used.has(d.n)) return;
         if (!d.s) used.add(d.n);
 
-        if (d.t === 'atk') { aMult *= d.m; aF.push(d.m); }
-        if (d.t === 'ele') { eMult *= d.m; eF.push(d.m); }
+        if (d.t === 'atk') { aM *= d.m; aLog.push(d.m); }
+        if (d.t === 'ele') { eM *= d.m; eLog.push(d.m); }
         if (d.t === 'hp') {
-            if (d.m) { hMult *= d.m; hF.push(d.m); }
+            if (d.m) { hM *= d.m; hLog.push(d.m); }
             if (d.f) hFix += d.f;
         }
-        if (d.b) { hMult *= d.b; hF.push(d.b); }
+        if (d.b) { hM *= d.b; hLog.push(d.b); }
     });
 
     const j = parseInt(document.getElementById('jail').value) || 0;
     const v = parseInt(document.getElementById('invader').value) || 0;
-    for(let i=0; i<j; i++) { aMult *= 1.05; eMult *= 1.05; aF.push(1.05); eF.push(1.05); }
-    for(let i=0; i<v; i++) { aMult *= 1.07; eMult *= 1.07; aF.push(1.0
+    for(let i=0; i<j; i++) { aM *= 1.05; eM *= 1.05; aLog.push(1.05); eLog.push(1.05); }
+    for(let i=0; i<v; i++) { aM *= 1.07; eM *= 1.07; aLog.push(1.07); eLog.push(1.07); }
+
+    const finalHP = Math.floor(bHP * hM) + hFix;
+    const finalAtk = Math.floor(bAtk * aM);
+    const finalEle = Math.floor(bEle * eM);
+
+    document.getElementById('hp-val').innerText = finalHP;
+    document.getElementById('atk-val').innerText = finalAtk;
+    document.getElementById('ele-val').innerText = finalEle;
+
+    const pct = (c, b) => b === 0 ? "100%" : (c / b * 100).toFixed(1) + "%";
+    document.getElementById('hp-pct').innerText = pct(finalHP, bHP);
+    document.getElementById('atk-pct').innerText = pct(finalAtk, bAtk);
+    document.getElementById('ele-pct').innerText = pct(finalEle, bEle);
+
+    document.getElementById('hp-base').innerText = "(元:" + bHP + ")";
+    document.getElementById('atk-base').innerText = "(元:" + bAtk + ")";
+    document.getElementById('ele-base').innerText = "(元:" + bEle + ")";
+
+    document.getElementById('hp-formula').innerHTML = `(${hLog.join(" × ")}) + ${hFix}`;
+    document.getElementById('atk-formula').innerHTML = aLog.join(" × ");
+    document.getElementById('ele-formula').innerHTML = eLog.join(" × ");
+}
+
+createSlots('n-slots');
+createSlots('d-slots');
+calc();
+</script>
+</body>
+</html>
