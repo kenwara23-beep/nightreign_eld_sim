@@ -3,103 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ナイトレイン 遺物構成シミュレーター</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>ナイトレイン 遺物構成シミュレーター v2.0</title>
     <style>
         :root { --bg: #0d0d0f; --card: #1c1c1e; --accent: #c1a35f; --deep: #6e40c9; --text: #f0f0f0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Kaku Gothic ProN", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; -webkit-user-select: none; }
-        .app-container { max-width: 500px; margin: 0 auto; padding-bottom: 120px; }
-        h1 { font-size: 1.1rem; text-align: center; color: var(--accent); letter-spacing: 0.1em; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
+        .container { max-width: 500px; margin: 0 auto; padding-bottom: 140px; }
+        h1 { font-size: 1rem; text-align: center; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 8px; }
         .slot-box { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #333; }
-        .label { font-size: 0.75rem; color: var(--accent); margin-bottom: 8px; display: block; font-weight: bold; }
-        .label.deep { color: #a371f7; }
-        select { width: 100%; height: 44px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 8px; padding: 0 10px; font-size: 0.9rem; margin-bottom: 10px; }
-        .result-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(20, 20, 25, 0.95); backdrop-filter: blur(10px); border-top: 2px solid var(--accent); padding: 15px; z-index: 100; }
-        .res-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .total-val { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
-        .percent-val { color: #ff5e5e; font-weight: bold; font-size: 1.1rem; }
-        .formula { font-size: 0.65rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid #333; padding-top: 5px; }
+        .label { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin-bottom: 8px; display: block; }
+        select { width: 100%; height: 45px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
+        .result-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 15, 20, 0.95); backdrop-filter: blur(10px); border-top: 2px solid var(--accent); padding: 15px; z-index: 100; }
+        .res-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .val { font-weight: bold; color: var(--accent); font-size: 1.3rem; }
+        .formula { font-size: 0.65rem; color: #888; border-top: 1px solid #333; padding-top: 5px; margin-top: 5px; white-space: nowrap; overflow-x: auto; }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <h1>REIGN RELIC SIM</h1>
+<div class="container">
+    <h1>REIGN RELIC SIM v2.0</h1>
+    <div id="slots-container"></div>
+</div>
+
+<div class="result-bar">
+    <div class="res-row"><span>最終攻撃倍率</span><span id="total-mult" class="val">1.000x</span></div>
+    <div class="res-row"><span>最大HP/FP</span><span id="total-stats" style="font-size: 0.9rem; color:#ff6b6b;">HP: +0 / FP: +0</span></div>
+    <div id="formula-text" class="formula">式: 1.0</div>
+</div>
+
+<script>
+// スプレッドシートから取得する場合はここをGASのURLにする
+const GAS_URL = ""; 
+
+// サイト情報を整形した全データ（スプシがない場合のデフォルト）
+const relicDatabase = [
+    {n:"--- 未装備 ---", v:1.0, t:"mult"},
+    /* 通常攻撃系 */
+    {n:"物理攻撃力上昇+2 (+6%)", v:1.06, t:"mult"},
+    {n:"物理攻撃力上昇+1 (+5%)", v:1.05, t:"mult"},
+    {n:"物理攻撃力上昇+0 (+4%)", v:1.04, t:"mult"},
+    {n:"近接攻撃力上昇 (1.05倍)", v:1.05, t:"mult"},
+    {n:"戦技攻撃力上昇 (1.15倍)", v:1.15, t:"mult"},
+    {n:"通常攻撃1段目強化 (1.15倍)", v:1.15, t:"mult"},
+    /* 深層攻撃系 */
+    {n:"深層：物理上昇+4 (+12%)", v:1.12, t:"mult"},
+    {n:"深層：物理上昇+3 (+10.5%)", v:1.105, t:"mult"},
+    {n:"深層：魔術/祈祷強化+2 (+10%)", v:1.10, t:"mult"},
+    /* アイテム系 */
+    {n:"投擲壺/ナイフ強化 (1.15倍)", v:1.15, t:"mult"},
+    {n:"調香術強化 (1.14倍)", v:1.14, t:"mult"},
+    /* ステータス系 */
+    {n:"最大HP上昇 (+100)", v:100, t:"hp_add"},
+    {n:"最大FP上昇 (+25)", v:25, t:"fp_add"},
+    {n:"深層：最大HP上昇 (+10%)", v:1.10, t:"hp_mult"},
+    {n:"深層：最大FP上昇 (+15%)", v:1.15, t:"fp_mult"}
+];
+
+function init() {
+    const container = document.getElementById('slots-container');
+    const categories = ["通常遺物 1", "通常遺物 2", "通常遺物 3", "深層遺物 1", "深層遺物 2", "深層遺物 3"];
+    
+    categories.forEach((cat, idx) => {
+        const box = document.createElement('div');
+        box.className = 'slot-box';
+        box.innerHTML = `<span class="label">${cat}</span><select class="relic-select" id="slot-${idx}"></select>`;
+        container.appendChild(box);
         
-        <div class="slot-box">
-            <span class="label">通常遺物（重ね掛け◯）</span>
-            <div id="n-slots"></div>
-        </div>
+        const sel = box.querySelector('select');
+        relicDatabase.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.v; opt.dataset.type = r.t; opt.textContent = r.n;
+            sel.appendChild(opt);
+        });
+        sel.addEventListener('change', calc);
+    });
+    calc();
+}
 
-        <div class="slot-box" style="border-left: 4px solid var(--deep);">
-            <span class="label deep">深層遺物（深き夜）</span>
-            <div id="d-slots"></div>
-        </div>
-    </div>
+function calc() {
+    let mult = 1.0;
+    let hp_add = 0; let hp_mult = 1.0;
+    let fp_add = 0; let fp_mult = 1.0;
+    let steps = [];
 
-    <div class="result-bar">
-        <div class="res-row">
-            <span style="font-size:0.8rem;">最終攻撃倍率</span>
-            <span id="res-mult" class="total-val">1.000x</span>
-        </div>
-        <div class="res-row">
-            <span style="font-size:0.8rem;">ダメージ上昇率</span>
-            <span id="res-percent" class="percent-val">+0.0%</span>
-        </div>
-        <div id="res-formula" class="formula"></div>
-    </div>
+    document.querySelectorAll('.relic-select').forEach(s => {
+        const opt = s.options[s.selectedIndex];
+        const v = parseFloat(opt.value);
+        const type = opt.dataset.type;
 
-    <script>
-        const normalList = [
-            {n:"未装備", v:1.0},
-            {n:"物理上昇+2(+6%)", v:1.06},
-            {n:"物理上昇+1(+5%)", v:1.05},
-            {n:"近接上昇(1.05倍)", v:1.05},
-            {n:"戦技上昇(1.15倍)", v:1.15},
-            {n:"状態異常時(最大1.45倍)", v:1.45},
-            {n:"魔術/祈祷強化(1.12倍)", v:1.12},
-            {n:"封牢/侵入者撃破(1.05-1.07倍)", v:1.06} // 平均値
-        ];
-        const deepList = [
-            {n:"未装備", v:1.0},
-            {n:"深層：物理+4(+12%)", v:1.12},
-            {n:"深層：物理+3(+10.5%)", v:1.105},
-            {n:"深層：武器3種装備(1.2倍)", v:1.20},
-            {n:"深層：魔術強化+2(1.1倍)", v:1.10},
-            {n:"睡眠/発狂/毒周囲(1.12-1.22倍)", v:1.15}
-        ];
+        if (v === 1.0 && type === "mult") return;
 
-        function init() {
-            const n = document.getElementById('n-slots');
-            const d = document.getElementById('d-slots');
-            for(let i=0; i<3; i++) {
-                const s = document.createElement('select');
-                s.className = 'calc-trigger';
-                normalList.forEach(item => { const o = document.createElement('option'); o.value=item.v; o.text=item.n; s.add(o); });
-                n.appendChild(s);
-            }
-            for(let i=0; i<3; i++) {
-                const s = document.createElement('select');
-                s.className = 'calc-trigger';
-                deepList.forEach(item => { const o = document.createElement('option'); o.value=item.v; o.text=item.n; s.add(o); });
-                d.appendChild(s);
-            }
-            document.querySelectorAll('.calc-trigger').forEach(s => s.addEventListener('change', calc));
-            calc();
-        }
+        if(type === "mult") { mult *= v; steps.push(v); }
+        else if(type === "hp_add") { hp_add += v; }
+        else if(type === "hp_mult") { hp_mult *= v; }
+        else if(type === "fp_add") { fp_add += v; }
+        else if(type === "fp_mult") { fp_mult *= v; }
+    });
 
-        function calc() {
-            let total = 1.0;
-            let steps = [];
-            document.querySelectorAll('.calc-trigger').forEach(s => {
-                const v = parseFloat(s.value);
-                if(v > 1.0) { total *= v; steps.push(v); }
-            });
-            document.getElementById('res-mult').innerText = total.toFixed(3) + "x";
-            document.getElementById('res-percent').innerText = "+" + ((total - 1)*100).toFixed(1) + "%";
-            document.getElementById('res-formula').innerText = "式: " + (steps.length ? steps.join(" × ") : "1.0");
-        }
-        init();
-    </script>
+    document.getElementById('total-mult').innerText = mult.toFixed(3) + "x";
+    document.getElementById('total-stats').innerText = `HP: +${hp_add} / ${hp_mult.toFixed(1)}倍 | FP: +${fp_add} / ${fp_mult.toFixed(1)}倍`;
+    document.getElementById('formula-text').innerText = "倍率式: " + (steps.length ? steps.join(" × ") : "1.0");
+}
+
+window.onload = init;
+</script>
 </body>
 </html>
