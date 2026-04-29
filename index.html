@@ -3,157 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>NR RELIC SIM v6.0</title>
+    <title>NR RELIC SIM v6.1</title>
     <style>
-        :root { --bg: #0d0d0f; --card: #1c1c1e; --accent: #c1a35f; --deep: #8a2be2; --text: #f0f0f0; --bad: #ff4d4d; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
-        .container { max-width: 480px; margin: 0 auto; padding-bottom: 200px; }
-        h1 { font-size: 1.1rem; text-align: center; color: var(--accent); margin: 10px 0; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .section-title { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin: 15px 0 8px 5px; display: block; border-left: 3px solid var(--accent); padding-left: 8px; }
-        .section-title.deep { color: #b19cd9; border-left-color: #b19cd9; }
-        .slot-box { background: var(--card); border-radius: 10px; padding: 10px; margin-bottom: 8px; border: 1px solid #333; }
-        select { width: 100%; height: 40px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 6px; font-size: 0.85rem; outline: none; }
-        .info-row { font-size: 0.65rem; color: #888; margin-top: 6px; display: flex; justify-content: space-between; }
-        .bad-text { color: var(--bad); font-weight: bold; }
-        .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 15, 20, 0.96); backdrop-filter: blur(8px); border-top: 2px solid var(--accent); padding: 15px 20px 25px; z-index: 100; }
-        .res-flex { display: flex; justify-content: space-between; align-items: center; }
-        .total-val { font-size: 2.2rem; font-weight: bold; color: var(--accent); }
-        .percent-val { font-size: 0.85rem; color: #ff5e5e; font-weight: bold; }
-        .warn-tag { background: var(--bad); color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 3px; display: none; margin-left: 5px; }
-        #loading { text-align: center; margin-top: 50px; color: var(--accent); }
+        :root { --bg: #0d0d0f; --card: #1c1c1e; --accent: #c1a35f; --text: #f0f0f0; --bad: #ff4d4d; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; font-size: 14px; }
+        .container { max-width: 500px; margin: 0 auto; padding-bottom: 180px; }
+        h1 { font-size: 1.2rem; text-align: center; color: var(--accent); margin: 5px 0; }
+        
+        .section-title { font-size: 0.8rem; color: var(--accent); font-weight: bold; margin: 15px 0 5px; border-left: 3px solid var(--accent); padding-left: 8px; }
+        
+        /* スロットを2列に並べてコンパクトにする */
+        .slot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .slot-box { background: var(--card); border-radius: 8px; padding: 8px; border: 1px solid #333; }
+        select { width: 100%; height: 35px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 4px; font-size: 0.8rem; }
+        
+        .info-text { font-size: 0.6rem; color: #888; margin-top: 4px; height: 2.4em; overflow: hidden; line-height: 1.2; }
+        
+        /* 固定フッター */
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 15, 20, 0.95); border-top: 2px solid var(--accent); padding: 15px; z-index: 100; }
+        .total-row { display: flex; justify-content: space-between; align-items: center; }
+        .total-num { font-size: 2.2rem; font-weight: bold; color: var(--accent); }
+        .total-percent { font-size: 1rem; color: #ff5e5e; font-weight: bold; }
+        #debug-log { font-size: 0.6rem; color: #555; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="loading">📡 スプシの「+1~4」をバラし中...</div>
-    <div id="app-main" style="display:none;">
-        <h1>Relic Simulator</h1>
-        <span class="section-title">通常遺物 (3スロット)</span>
-        <div id="normal-area"></div>
-        <span class="section-title deep">深層遺物 (枠を増やしました)</span>
-        <div id="deep-area"></div>
+    <h1>Relic Simulator</h1>
+    <div id="loading">📡 データ解析中...</div>
+
+    <div id="app" style="display:none;">
+        <span class="section-title">通常遺物 (通常枠)</span>
+        <div id="n-slots" class="slot-grid"></div>
+
+        <span class="section-title" style="color:#b19cd9;">深層遺物 (10枠に増加)</span>
+        <div id="d-slots" class="slot-grid"></div>
     </div>
 </div>
 
-<div class="footer-bar">
-    <div class="res-flex">
+<div class="footer">
+    <div class="total-row">
         <div>
-            <span style="font-size:0.7rem; color:#888;">DAMAGE MULTIPLIER</span><span id="warn" class="warn-tag">DUP ERR</span><br>
-            <span id="percent-display" class="percent-val">+0.0% UP</span>
+            <span style="font-size:0.7rem; color:#888;">TOTAL MULTIPLIER</span><br>
+            <span id="res-pct" class="total-percent">+0.0%</span>
         </div>
-        <div id="total-display" class="total-val">1.000</div>
+        <div id="res-val" class="total-num">1.000</div>
     </div>
+    <div id="debug-log"></div>
 </div>
 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxo63D25mvm9EVV0zoytBrKobuC6j4k5wI--nwgvi_rvkXJ_RhL9r2lyXYe8zhCvg2l/exec";
 
-async function startApp() {
+async function init() {
     try {
         const res = await fetch(GAS_URL, { redirect: 'follow' });
-        const db = await res.json();
+        const raw = await res.json();
         
-        // データを「+1~4」などの形式から分割展開する
-        const processedNormal = expandRelics(db.normal);
-        const processedDeep = expandRelics(db.deep);
+        // 分割ロジックを大幅強化
+        const normal = expandData(raw.normal);
+        const deep = expandData(raw.deep);
 
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('app-main').style.display = 'block';
-        
-        // スロット生成（通常3、深層6に増加）
-        for(let i=0; i<3; i++) buildSlot(document.getElementById('normal-area'), processedNormal);
-        for(let i=0; i<6; i++) buildSlot(document.getElementById('deep-area'), processedDeep);
-        
-        runCalc();
+        document.getElementById('app').style.display = 'block';
+
+        // 通常3枠、深層10枠作成
+        for(let i=0; i<3; i++) createSelect(document.getElementById('n-slots'), normal);
+        for(let i=0; i<10; i++) createSelect(document.getElementById('d-slots'), deep);
+
+        calc();
     } catch(e) {
-        document.getElementById('loading').innerHTML = "❌ 同期失敗";
+        document.getElementById('loading').innerText = "通信エラー";
     }
 }
 
-// 物理上昇+1~4 などのデータを分割してリスト化する関数
-function expandRelics(list) {
-    let newList = [];
-    list.forEach(item => {
-        // "名称+1~4" かつ 詳細に "/" が含まれる場合を判定
-        if (item.name.includes("~") && item.effect.includes("/")) {
-            const rangeMatch = item.name.match(/\+(\d+)~(\d+)/);
-            const perValues = item.effect.split("/"); // "+4%/+5%..." を分ける
-            
-            if (rangeMatch) {
-                const start = 0; // +0から作成
-                const end = parseInt(rangeMatch[2]);
-                const baseName = item.name.split("+")[0];
+// 物理上昇+1~4 を +0, +1, +2, +3, +4 に強制分解する関数
+function expandData(dataList) {
+    let result = [];
+    dataList.forEach(item => {
+        const name = item.name || "";
+        const eff = item.effect || "";
+
+        // 「~」が含まれている、または詳細が「/」で区切られている場合
+        if (name.includes("~") || name.includes("～") || eff.includes("/")) {
+            // 数値部分を抽出 (例: +1~4 -> 1と4)
+            const range = name.match(/(\d+)[~～](\d+)/);
+            // パーセンテージを抽出 (例: +4%/+5%... -> ["+4%", "+5%"])
+            const vals = eff.split(/[\/／]/);
+
+            if (range || vals.length > 1) {
+                const baseName = name.split(/[+＋0-9]/)[0]; // "物理攻撃力上昇"
+                const start = 0; // 常に+0から作る
+                const end = range ? parseInt(range[2]) : vals.length - 1;
 
                 for (let i = start; i <= end; i++) {
-                    if (perValues[i]) {
-                        newList.push({
-                            name: `${baseName}+${i}`,
-                            effect: perValues[i].trim(),
+                    if (vals[i]) {
+                        result.push({
+                            name: baseName + "+" + i,
+                            effect: vals[i].trim(),
                             stack: item.stack,
                             bad: item.bad
                         });
                     }
                 }
-                return; // 元の結合データは追加しない
+                return; // 元の結合データは飛ばす
             }
         }
-        newList.push(item);
+        result.push(item);
     });
-    return newList;
+    return result;
 }
 
-function buildSlot(parent, list) {
+function createSelect(target, list) {
     const box = document.createElement('div');
     box.className = 'slot-box';
     const sel = document.createElement('select');
-    sel.className = 'relic-select';
-    sel.onchange = (e) => {
-        const o = e.target.options[e.target.selectedIndex];
-        box.querySelector('.desc').innerText = o.dataset.eff || "";
-        box.querySelector('.bad').innerText = o.dataset.bad && o.dataset.bad !== "undefined" ? " / " + o.dataset.bad : "";
-        runCalc();
+    sel.className = 'relic-sel';
+    sel.onchange = () => {
+        const o = sel.options[sel.selectedIndex];
+        box.querySelector('.info-text').innerText = (o.dataset.eff || "") + (o.dataset.bad && o.dataset.bad !== "undefined" ? " / " + o.dataset.bad : "");
+        calc();
     };
-    sel.appendChild(new Option("--- 未装備 ---", "1.0"));
-    list.forEach(item => {
-        const val = parseValue(item.effect);
-        const opt = new Option(item.name, val);
-        opt.dataset.stack = item.stack;
-        opt.dataset.eff = item.effect;
-        opt.dataset.bad = item.bad;
+
+    sel.appendChild(new Option("---", "1.0"));
+    list.forEach(r => {
+        const val = parseValue(r.effect);
+        const opt = new Option(r.name, val);
+        opt.dataset.stack = r.stack;
+        opt.dataset.eff = r.effect;
+        opt.dataset.bad = r.bad;
         sel.appendChild(opt);
     });
-    box.innerHTML = `<div class="info-row"><span class="desc"></span><span class="bad bad-text"></span></div>`;
+    box.innerHTML = `<div class="info-text"></div>`;
     box.prepend(sel);
-    parent.appendChild(box);
+    target.appendChild(box);
 }
 
-function parseValue(text) {
-    const m = text.match(/(\d+\.?\d*)(%|倍)/);
+function parseValue(t) {
+    const m = t.match(/(\d+\.?\d*)(%|倍)/);
     if(!m) return 1.0;
     return m[2] === "%" ? 1 + (parseFloat(m[1])/100) : parseFloat(m[1]);
 }
 
-function runCalc() {
-    let mult = 1.0;
+function calc() {
+    let total = 1.0;
     let used = new Set();
-    let isDup = false;
-    document.querySelectorAll('.relic-select').forEach(s => {
+    document.querySelectorAll('.relic-sel').forEach(s => {
         const o = s.options[s.selectedIndex];
-        if(o.text.includes("---")) return;
-        if(o.dataset.stack === "✕") {
-            if(used.has(o.text)) { isDup = true; return; }
+        if(o.text === "---") return;
+        if(o.dataset.stack === "✕" || o.dataset.stack === "×") {
+            if(used.has(o.text)) return;
             used.add(o.text);
         }
-        mult *= parseFloat(o.value);
+        total *= parseFloat(o.value);
     });
-    document.getElementById('total-display').innerText = mult.toFixed(3);
-    document.getElementById('percent-display').innerText = "+" + ((mult - 1)*100).toFixed(1) + "% UP";
-    document.getElementById('warn').style.display = isDup ? "inline-block" : "none";
+    document.getElementById('res-val').innerText = total.toFixed(3);
+    document.getElementById('res-pct').innerText = "+" + ((total - 1)*100).toFixed(1) + "%";
 }
-startApp();
+
+init();
 </script>
 </body>
 </html>
