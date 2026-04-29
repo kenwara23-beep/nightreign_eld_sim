@@ -5,33 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>NR RELIC SIM - FULL DATA v7.1</title>
+    <title>NR RELIC SIM - COMPLETE v7.2</title>
     <style>
         :root { --bg: #0d0d0f; --card: #1c1c1e; --accent: #c1a35f; --text: #f0f0f0; --bad: #ff4d4d; }
         body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; font-size: 13px; }
-        .container { max-width: 500px; margin: 0 auto; padding-bottom: 180px; }
-        h1 { font-size: 1rem; text-align: center; color: var(--accent); margin: 5px 0 10px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .container { max-width: 500px; margin: 0 auto; padding-bottom: 200px; }
+        h1 { font-size: 1.1rem; text-align: center; color: var(--accent); margin: 5px 0 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .section-title { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin: 15px 0 5px; border-left: 3px solid var(--accent); padding-left: 8px; display: block;}
-        .slot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .slot-box { background: var(--card); border-radius: 8px; padding: 8px; border: 1px solid #333; min-height: 85px; display: flex; flex-direction: column; }
-        select { width: 100%; height: 38px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 4px; font-size: 0.8rem; outline: none; }
-        .info-text { font-size: 0.55rem; color: #888; margin-top: 5px; line-height: 1.2; flex-grow: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+        .slot-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 15px; }
+        .slot-box { background: var(--card); border-radius: 8px; padding: 12px; border: 1px solid #333; min-height: 80px; }
+        select { width: 100%; height: 42px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 6px; font-size: 0.95rem; outline: none; }
+        .info-text { font-size: 0.65rem; color: #888; margin-top: 8px; line-height: 1.3; }
+        
+        /* バフスライダー設定 */
+        .slider-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .slider-item { background: #252527; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+        .slider-item label { display: block; font-size: 0.7rem; color: #aaa; margin-bottom: 5px; }
+        .slider-item input { width: 100%; height: 32px; background: #3a3a3c; border: 1px solid #555; color: white; border-radius: 4px; text-align: center; font-size: 1rem; }
+
         .footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 15, 20, 0.98); border-top: 2px solid var(--accent); padding: 15px 20px 25px; z-index: 1000; box-shadow: 0 -5px 15px rgba(0,0,0,0.5); }
         .total-row { display: flex; justify-content: space-between; align-items: center; }
-        .total-num { font-size: 2.2rem; font-weight: bold; color: var(--accent); font-family: monospace; }
-        .total-percent { font-size: 1rem; color: #ff5e5e; font-weight: bold; }
+        .total-num { font-size: 2.4rem; font-weight: bold; color: var(--accent); font-family: monospace; }
+        .total-percent { font-size: 1.1rem; color: #ff5e5e; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Relic Simulator Full</h1>
+    <h1>Relic Simulator Complete</h1>
+
+    <span class="section-title">FIELD BUFFS (撃破数)</span>
+    <div class="slider-grid">
+        <div class="slider-item">
+            <label>封牢の囚 撃破 (x1.05)</label>
+            <input type="number" id="jail" value="0" min="0" max="10" oninput="calc()">
+        </div>
+        <div class="slider-item">
+            <label>夜の侵入者 撃破 (x1.07)</label>
+            <input type="number" id="invader" value="0" min="0" max="10" oninput="calc()">
+        </div>
+    </div>
 
     <div id="app">
-        <span class="section-title">NORMAL RELICS (3 Slots)</span>
+        <span class="section-title">NORMAL RELICS (MAX 3)</span>
         <div id="n-slots" class="slot-grid"></div>
 
-        <span class="section-title" style="color:#b19cd9;">DEEP RELICS (10 Slots)</span>
+        <span class="section-title" style="color:#b19cd9;">DEEP RELICS (MAX 3)</span>
         <div id="d-slots" class="slot-grid"></div>
     </div>
 </div>
@@ -39,15 +58,15 @@
 <div class="footer">
     <div class="total-row">
         <div>
-            <span style="font-size:0.7rem; color:#888;">TOTAL MULTIPLIER</span><br>
-            <span id="res-pct" class="total-percent">+0.0%</span>
+            <span style="font-size:0.75rem; color:#888;">TOTAL DAMAGE MULT</span><br>
+            <span id="res-pct" class="total-percent">+0.0% UP</span>
         </div>
         <div id="res-val" class="total-num">1.000</div>
     </div>
 </div>
 
 <script>
-// --- スプレッドシート（CSV）から全抽出したデータ ---
+// --- スプレッドシートから完全に抽出した全データセット ---
 const DATA_NORMAL = [
     { n: "最大HP上昇", e: "1.1倍", s: "✕" },
     { n: "最大FP上昇", e: "1.15倍", s: "✕" },
@@ -64,17 +83,16 @@ const DATA_NORMAL = [
     { n: "火属性攻撃力上昇", e: "4%/5%/6%/10.5%/12%", s: "✕" },
     { n: "雷属性攻撃力上昇", e: "4%/5%/6%/10.5%/12%", s: "✕" },
     { n: "聖属性攻撃力上昇", e: "4%/5%/6%/10.5%/12%", s: "✕" },
-    { n: "致命の一撃の威力上昇", e: "1.15倍", s: "✕" },
+    { n: "致命の一撃威力上昇", e: "1.15倍", s: "✕" },
     { n: "ガード強度上昇", e: "1.1倍", s: "✕" },
     { n: "強靭度上昇", e: "1.15倍", s: "✕" },
+    { n: "物理攻撃(通常)", e: "1.1倍", s: "✕" },
     { n: "属性痕:魔術の地", e: "1.15倍", s: "✕" },
     { n: "執行者:スキル中攻撃", e: "1.35倍", s: "✕" },
+    { n: "アーツ発動:物理上昇", e: "1.16倍", s: "✕" },
     { n: "味方バフ:物理", e: "1.2倍", s: "✕" },
     { n: "味方バフ:属性", e: "1.15倍", s: "✕" },
-    { n: "咆哮:HP回復", e: "1.15倍(回復量)", s: "✕" },
-    { n: "物理攻撃(通常)", e: "1.1倍", s: "✕" },
-    { n: "アーツ発動時:物理上昇", e: "1.16倍", s: "✕" },
-    { n: "アーツ発動時:最大HP上昇", e: "1.5倍", s: "✕" }
+    { n: "咆哮:味方回復量", e: "1.15倍", s: "✕" }
 ];
 
 const DATA_DEEP = [
@@ -82,27 +100,24 @@ const DATA_DEEP = [
     { n: "最大FP上昇", e: "1.15倍", s: "◯", b: "被ダメージ+15%" },
     { n: "最大スタミナ上昇", e: "1.12倍", s: "◯", b: "被ダメージ+12%" },
     { n: "強靭度上昇+3", e: "1.25倍", s: "◯", b: "なし" },
+    { n: "物理攻撃力上昇", e: "10%/12%/14%/18%/22%", s: "◯", b: "最大HP-10%" },
+    { n: "属性攻撃力上昇", e: "10%/12%/14%/18%/22%", s: "◯", b: "最大HP-10%" },
     { n: "小砦:取得ルーン増加", e: "1.055倍", s: "✕", b: "なし" },
     { n: "大教会:最大HP上昇", e: "1.05倍", s: "✕", b: "なし" },
     { n: "大野営地:最大スタミナ", e: "1.06倍", s: "✕", b: "なし" },
-    { n: "物理攻撃力上昇(深層)", e: "10%/12%/14%/18%/22%", s: "◯", b: "最大HP-10%" },
-    { n: "属性攻撃力上昇(深層)", e: "10%/12%/14%/18%/22%", s: "◯", b: "最大HP-10%" },
     { n: "全耐性上昇", e: "1.15倍", s: "◯", b: "なし" }
 ];
 
-// --- 補助関数: 文字列から倍率数値を抽出 ---
-function parseMult(txt) {
+// 文字列解析関数
+function parseM(txt) {
     if(!txt) return 1.0;
-    // 全角を半角に
-    const t = txt.replace(/[０-９％倍]/g, s => {
-        return {'％':'%','倍':'倍','０':'0','１':'1','２':'2','３':'3','４':'4','５':'5','６':'6','７':'7','８':'8','９':'9'}[s] || s;
-    });
-    const m = t.match(/(\d+\.?\d*)(%|倍)/);
+    const clean = txt.replace(/[０-９％倍]/g, s => ({'％':'%','倍':'倍','０':'0','１':'1','２':'2','３':'3','４':'4','５':'5','６':'6','７':'7','８':'8','９':'9'}[s] || s));
+    const m = clean.match(/(\d+\.?\d*)(%|倍)/);
     if(!m) return 1.0;
     return m[2] === "%" ? 1 + (parseFloat(m[1])/100) : parseFloat(m[1]);
 }
 
-// --- 分割・展開ロジック ---
+// 分割展開
 function expand(list) {
     let res = [];
     list.forEach(item => {
@@ -118,18 +133,18 @@ function expand(list) {
     return res;
 }
 
-const nFinal = expand(DATA_NORMAL);
-const dFinal = expand(DATA_DEEP);
+const nData = expand(DATA_NORMAL);
+const dData = expand(DATA_DEEP);
 
-function buildSlot(parent, list) {
+function createSlot(target, list) {
     const box = document.createElement('div');
     box.className = 'slot-box';
     const sel = document.createElement('select');
     sel.className = 'relic-sel';
-    sel.appendChild(new Option("---", "1.0"));
+    sel.appendChild(new Option("--- 未装備 ---", "1.0"));
     
     list.forEach(r => {
-        const val = parseMult(r.effect);
+        const val = parseM(r.effect);
         const opt = new Option(r.name, val);
         opt.dataset.stack = r.stack;
         opt.dataset.eff = r.effect;
@@ -140,40 +155,45 @@ function buildSlot(parent, list) {
     sel.onchange = () => {
         const o = sel.options[sel.selectedIndex];
         const info = box.querySelector('.info-text');
-        if(o.text === "---") {
-            info.innerText = "";
-        } else {
-            info.innerText = o.dataset.eff + (o.dataset.bad ? "\n⚠ " + o.dataset.bad : "");
-        }
+        info.innerText = o.text === "--- 未装備 ---" ? "" : o.dataset.eff + (o.dataset.bad ? " / ⚠ " + o.dataset.bad : "");
         calc();
     };
 
     box.innerHTML = `<div class="info-text"></div>`;
     box.prepend(sel);
-    parent.appendChild(box);
+    target.appendChild(box);
 }
 
 function calc() {
     let total = 1.0;
     let used = new Set();
+    
+    // 遺物計算
     document.querySelectorAll('.relic-sel').forEach(s => {
         const o = s.options[s.selectedIndex];
-        if (o.text === "---") return;
-        
-        // 重複チェック (✕印のみ)
+        if (o.text.includes("---")) return;
         if (o.dataset.stack === "✕") {
-            if (used.has(o.text.split("+")[0])) return; // 名称の基本部分でチェック
-            used.add(o.text.split("+")[0]);
+            const base = o.text.split("+")[0];
+            if (used.has(base)) return;
+            used.add(base);
         }
         total *= parseFloat(o.value);
     });
+
+    // 撃破バフ計算
+    const jailCount = parseInt(document.getElementById('jail').value) || 0;
+    for(let i=0; i<jailCount; i++) total *= 1.05;
+
+    const invCount = parseInt(document.getElementById('invader').value) || 0;
+    for(let i=0; i<invCount; i++) total *= 1.07;
+
     document.getElementById('res-val').innerText = total.toFixed(3);
-    document.getElementById('res-pct').innerText = "+" + ((total - 1) * 100).toFixed(1) + "%";
+    document.getElementById('res-pct').innerText = "+" + ((total - 1) * 100).toFixed(1) + "% UP";
 }
 
-// 実行
-for(let i=0; i<3; i++) buildSlot(document.getElementById('n-slots'), nFinal);
-for(let i=0; i<10; i++) buildSlot(document.getElementById('d-slots'), dFinal);
+// スロット生成（通常3, 深層3）
+for(let i=0; i<3; i++) createSlot(document.getElementById('n-slots'), nData);
+for(let i=0; i<3; i++) createSlot(document.getElementById('d-slots'), dData);
 calc();
 
 </script>
