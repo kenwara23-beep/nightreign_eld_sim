@@ -5,166 +5,181 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>NR RELIC SIM v5.1</title>
+    <title>NR RELIC SIM v5.2</title>
     <style>
         :root { --bg: #0d0d0f; --card: #1c1c1e; --accent: #c1a35f; --deep: #8a2be2; --text: #f0f0f0; --bad: #ff4d4d; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
-        .container { max-width: 480px; margin: 0 auto; padding-bottom: 160px; }
-        h1 { font-size: 1rem; text-align: center; color: var(--accent); margin: 5px 0 15px; letter-spacing: 2px; border-bottom: 1px solid #333; padding-bottom: 8px; }
-        .section-title { font-size: 0.7rem; color: var(--accent); font-weight: bold; margin: 10px 0 5px 5px; display: block; }
-        .slot-box { background: var(--card); border-radius: 8px; padding: 10px; margin-bottom: 8px; border: 1px solid #333; }
-        select { width: 100%; height: 40px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 5px; font-size: 0.85rem; }
-        .info { font-size: 0.65rem; color: #aaa; margin-top: 5px; display: flex; justify-content: space-between; }
-        .bad-label { color: var(--bad); font-weight: bold; }
-        .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-        .config-item { background: #252527; padding: 8px; border-radius: 6px; border: 1px solid #333; font-size: 0.7rem; }
-        .config-item input, .config-item select { width: 100%; height: 30px; background: #3a3a3c; border: 1px solid #555; color: white; border-radius: 4px; margin-top: 4px; }
-        .result-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 15, 20, 0.95); border-top: 2px solid var(--accent); padding: 12px 20px 25px; z-index: 1000; }
-        .res-main { display: flex; justify-content: space-between; align-items: center; }
-        .res-total { font-size: 2.2rem; font-weight: bold; color: var(--accent); }
-        .res-percent { font-size: 0.85rem; color: #ff5e5e; font-weight: bold; }
-        .res-formula { font-size: 0.6rem; color: #666; margin-top: 8px; border-top: 1px solid #333; padding-top: 5px; white-space: nowrap; overflow-x: auto; }
-        .dup-error { color: var(--bad); font-size: 0.65rem; display: none; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; line-height: 1.5; }
+        .container { max-width: 480px; margin: 0 auto; padding-bottom: 180px; }
+        
+        h1 { font-size: 1.1rem; text-align: center; color: var(--accent); margin: 10px 0 20px; letter-spacing: 1px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .section-title { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin: 15px 0 8px 5px; display: block; border-left: 3px solid var(--accent); padding-left: 8px; }
+        .section-title.deep { color: #b19cd9; border-left-color: #b19cd9; }
+
+        /* スロットデザインをスリム化 */
+        .slot-box { background: var(--card); border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid #333; }
+        select { width: 100%; height: 42px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 6px; font-size: 0.9rem; outline: none; }
+        .info-row { font-size: 0.65rem; color: #888; margin-top: 6px; min-height: 1.2em; display: flex; justify-content: space-between; }
+        .bad-text { color: var(--bad); font-weight: bold; }
+
+        /* 累積バフ：横並び調整 */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .grid-item { background: #252527; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+        .grid-item span { font-size: 0.7rem; color: #aaa; display: block; margin-bottom: 5px; }
+        .grid-item input, .grid-item select { width: 100%; height: 32px; background: #3a3a3c; border: 1px solid #555; color: white; border-radius: 4px; font-size: 0.85rem; }
+
+        /* リザルト固定バー */
+        .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 15, 20, 0.96); backdrop-filter: blur(8px); border-top: 2px solid var(--accent); padding: 15px 20px 25px; z-index: 100; box-shadow: 0 -5px 15px rgba(0,0,0,0.5); }
+        .res-flex { display: flex; justify-content: space-between; align-items: center; }
+        .total-val { font-size: 2.2rem; font-weight: bold; color: var(--accent); line-height: 1; }
+        .percent-val { font-size: 0.85rem; color: #ff5e5e; font-weight: bold; }
+        .formula-text { font-size: 0.6rem; color: #666; margin-top: 10px; border-top: 1px solid #333; padding-top: 6px; overflow-x: auto; white-space: nowrap; }
+        .warn-tag { background: var(--bad); color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 3px; display: none; margin-left: 5px; vertical-align: middle; }
+
+        #loading-screen { text-align: center; margin-top: 100px; color: var(--accent); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Relic Simulator</h1>
-    <div id="loading" style="text-align:center; margin-top:50px;">📡 Synchronizing Data...</div>
+    <div id="loading-screen">📡 Synchronizing with Spreadsheet...</div>
     
-    <div id="app-ui" style="display:none;">
-        <span class="section-title">NORMAL SLOTS</span>
-        <div id="n-slots"></div>
-        <span class="section-title" style="color:#b19cd9;">DEEP SLOTS</span>
-        <div id="d-slots"></div>
+    <div id="app-main" style="display:none;">
+        <h1>Relic Simulator</h1>
 
-        <span class="section-title">FIELD BUFFS</span>
-        <div class="config-grid">
-            <div class="config-item"><span>封牢撃破 (x1.05)</span><input type="number" id="jail" value="0" min="0" oninput="calculate()"></div>
-            <div class="config-item"><span>侵入撃破 (x1.07)</span><input type="number" id="invader" value="0" min="0" oninput="calculate()"></div>
-            <div class="config-item" style="grid-column: span 2;">
-                <span>状況バフ</span>
-                <select id="extra-buff" onchange="calculate()">
+        <span class="section-title">NORMAL RELICS (MAX 3)</span>
+        <div id="normal-area"></div>
+
+        <span class="section-title deep">DEEP RELICS (MAX 3)</span>
+        <div id="deep-area"></div>
+
+        <span class="section-title">BUFFS & CONDITIONS</span>
+        <div class="grid">
+            <div class="grid-item"><span>封牢 (x1.05)</span><input type="number" id="jail" value="0" min="0" oninput="runCalc()"></div>
+            <div class="grid-item"><span>侵入 (x1.07)</span><input type="number" id="invader" value="0" min="0" oninput="runCalc()"></div>
+            <div class="grid-item" style="grid-column: span 2;">
+                <span>連撃 / 状態異常</span>
+                <select id="extra" onchange="runCalc()">
                     <option value="1.0">なし</option>
                     <option value="1.12">連撃 Lv2 (1.12x)</option>
                     <option value="1.22">連撃 Lv3 (1.22x)</option>
-                    <option value="1.45">状態異常時 (1.45x)</option>
-                    <option value="1.10">物理攻撃(通常) (1.10x)</option>
+                    <option value="1.45">状態異常バフ (1.45x)</option>
                 </select>
             </div>
         </div>
     </div>
 </div>
 
-<div class="result-bar">
-    <div class="res-main">
+<div class="footer-bar">
+    <div class="res-flex">
         <div>
-            <span style="font-size:0.7rem; color:#888;">TOTAL MULTIPLIER</span><br>
-            <span id="res-percent" class="res-percent">+0.0%</span>
-            <span id="dup-msg" class="dup-error">⚠️重複無効</span>
+            <span style="font-size:0.7rem; color:#888;">DAMAGE MULTIPLIER</span><span id="warn" class="warn-tag">DUP ERR</span><br>
+            <span id="percent-display" class="percent-val">+0.0% UP</span>
         </div>
-        <div id="res-total" class="res-total">1.000</div>
+        <div id="total-display" class="total-val">1.000</div>
     </div>
-    <div id="res-formula" class="res-formula">Formula: 1.0</div>
+    <div id="formula-display" class="formula-text">Formula: 1.0</div>
 </div>
 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxo63D25mvm9EVV0zoytBrKobuC6j4k5wI--nwgvi_rvkXJ_RhL9r2lyXYe8zhCvg2l/exec";
 
-let masterData = { normal: [], deep: [] };
+let db = { normal: [], deep: [] };
 
-async function init() {
+async function startApp() {
     try {
         const res = await fetch(GAS_URL, { redirect: 'follow' });
-        masterData = await res.json();
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('app-ui').style.display = 'block';
+        db = await res.json();
         
-        for(let i=0; i<3; i++) createSlot(document.getElementById('n-slots'), masterData.normal);
-        for(let i=0; i<3; i++) createSlot(document.getElementById('d-slots'), masterData.deep);
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('app-main').style.display = 'block';
         
-        calculate();
+        const nRoot = document.getElementById('normal-area');
+        const dRoot = document.getElementById('deep-area');
+        
+        for(let i=0; i<3; i++) buildSlot(nRoot, db.normal);
+        for(let i=0; i<3; i++) buildSlot(dRoot, db.deep);
+        
+        runCalc();
     } catch(e) {
-        document.getElementById('loading').innerText = "❌ Connection Failed";
+        document.getElementById('loading-screen').innerHTML = "❌ Connection Failed.<br>Please check GAS settings.";
     }
 }
 
-function createSlot(container, data) {
+function buildSlot(parent, list) {
     const box = document.createElement('div');
     box.className = 'slot-box';
     const sel = document.createElement('select');
-    sel.className = 'relic-sel';
+    sel.className = 'relic-select';
 
     sel.onchange = (e) => {
-        const opt = e.target.options[e.target.selectedIndex];
-        box.querySelector('.detail-text').innerText = opt.dataset.eff || "";
-        box.querySelector('.bad-text').innerText = opt.dataset.bad && opt.dataset.bad !== "undefined" ? " / " + opt.dataset.bad : "";
-        calculate();
+        const o = e.target.options[e.target.selectedIndex];
+        box.querySelector('.desc').innerText = o.dataset.eff || "";
+        box.querySelector('.bad').innerText = o.dataset.bad && o.dataset.bad !== "undefined" ? " / " + o.dataset.bad : "";
+        runCalc();
     };
 
     sel.appendChild(new Option("--- EMPTY ---", "1.0"));
-    data.forEach(item => {
-        const opt = new Option(item.name, getVal(item.name, item.effect));
+    list.forEach(item => {
+        const val = extractVal(item.name, item.effect);
+        const opt = new Option(item.name, val);
         opt.dataset.stack = item.stack;
         opt.dataset.eff = item.effect;
         opt.dataset.bad = item.bad;
         sel.appendChild(opt);
     });
 
-    box.innerHTML = `<div class="info"><span class="detail-text"></span><span class="bad-text bad-label"></span></div>`;
+    box.innerHTML = `<div class="info-row"><span class="desc"></span><span class="bad bad-text"></span></div>`;
     box.prepend(sel);
-    container.appendChild(box);
+    parent.appendChild(box);
 }
 
-// 文字列から倍率を抽出する強化ロジック
-function getVal(name, effect) {
-    // 物理上昇+4 などの特定のキーワードを優先
+function extractVal(name, text) {
+    // 物理上昇+xのショートカット
     if(name.includes("+4")) return 1.12;
     if(name.includes("+3")) return 1.105;
     if(name.includes("+2")) return 1.06;
     if(name.includes("+1")) return 1.05;
     if(name.includes("+0")) return 1.04;
     
-    const m = effect.match(/(\d+\.?\d*)(%|倍)/);
+    const m = text.match(/(\d+\.?\d*)(%|倍)/);
     if(m) return m[2] === "%" ? 1 + (parseFloat(m[1])/100) : parseFloat(m[1]);
     return 1.0;
 }
 
-function calculate() {
-    let total = 1.0;
-    let steps = [];
-    let seen = new Set();
-    let hasDup = false;
+function runCalc() {
+    let mult = 1.0;
+    let list = [];
+    let used = new Set();
+    let isDup = false;
 
-    document.querySelectorAll('.relic-sel').forEach(sel => {
-        const opt = sel.options[sel.selectedIndex];
-        const val = parseFloat(opt.value);
-        if(opt.text.includes("---")) return;
-
-        if(opt.dataset.stack === "×") {
-            if(seen.has(opt.text)) { hasDup = true; return; }
-            seen.add(opt.text);
+    document.querySelectorAll('.relic-select').forEach(s => {
+        const o = s.options[s.selectedIndex];
+        if(o.text.includes("---")) return;
+        
+        if(o.dataset.stack === "×") {
+            if(used.has(o.text)) { isDup = true; return; }
+            used.add(o.text);
         }
-        total *= val;
-        steps.push(val);
+        mult *= parseFloat(o.value);
+        list.push(o.value);
     });
 
-    // 累積
     const j = parseInt(document.getElementById('jail').value) || 0;
-    for(let i=0; i<j; i++){ total *= 1.05; steps.push(1.05); }
+    for(let i=0; i<j; i++) { mult *= 1.05; list.push(1.05); }
     const v = parseInt(document.getElementById('invader').value) || 0;
-    for(let i=0; i<v; i++){ total *= 1.07; steps.push(1.07); }
+    for(let i=0; i<v; i++) { mult *= 1.07; list.push(1.07); }
 
-    const ex = parseFloat(document.getElementById('extra-buff').value);
-    if(ex > 1.0) { total *= ex; steps.push(ex); }
+    const ex = parseFloat(document.getElementById('extra').value);
+    if(ex > 1.0) { mult *= ex; list.push(ex); }
 
-    document.getElementById('res-total').innerText = total.toFixed(3);
-    document.getElementById('res-percent').innerText = "+" + ((total - 1)*100).toFixed(1) + "% UP";
-    document.getElementById('res-formula').innerText = "Exp: " + (steps.length ? steps.join(" × ") : "1.0");
-    document.getElementById('dup-msg').style.display = hasDup ? "inline" : "none";
+    document.getElementById('total-display').innerText = mult.toFixed(3);
+    document.getElementById('percent-display').innerText = "+" + ((mult - 1)*100).toFixed(1) + "% UP";
+    document.getElementById('formula-display').innerText = "Path: " + (list.length ? list.join(" × ") : "1.0");
+    document.getElementById('warn').style.display = isDup ? "inline-block" : "none";
 }
-init();
+
+startApp();
 </script>
 </body>
 </html>
