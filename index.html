@@ -3,108 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ナイトレイン 遺物構成シミュレーター v2.0</title>
+    <title>ナイトレイン 遺物構成シミュレーター v4.0</title>
     <style>
-        :root { --bg: #0d0d0f; --card: #1c1c1e; --accent: #c1a35f; --deep: #6e40c9; --text: #f0f0f0; }
+        :root { --bg: #0d0d0f; --card: #1c1c1e; --accent: #c1a35f; --deep: #6e40c9; --text: #f0f0f0; --bad: #ff4444; }
         body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
-        .container { max-width: 500px; margin: 0 auto; padding-bottom: 140px; }
-        h1 { font-size: 1rem; text-align: center; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 8px; }
-        .slot-box { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #333; }
+        .container { max-width: 500px; margin: 0 auto; padding-bottom: 160px; }
+        .slot-box { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid #333; position: relative; }
         .label { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin-bottom: 8px; display: block; }
-        select { width: 100%; height: 45px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
-        .result-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 15, 20, 0.95); backdrop-filter: blur(10px); border-top: 2px solid var(--accent); padding: 15px; z-index: 100; }
-        .res-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .val { font-weight: bold; color: var(--accent); font-size: 1.3rem; }
-        .formula { font-size: 0.65rem; color: #888; border-top: 1px solid #333; padding-top: 5px; margin-top: 5px; white-space: nowrap; overflow-x: auto; }
+        .label.deep { color: #a371f7; }
+        select { width: 100%; height: 45px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; }
+        .detail { font-size: 0.7rem; color: #888; margin-top: -5px; margin-bottom: 5px; min-height: 1em; }
+        .bad-text { font-size: 0.7rem; color: var(--bad); font-weight: bold; }
+        
+        .result-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 15, 20, 0.98); border-top: 2px solid var(--accent); padding: 15px; z-index: 100; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
+        .val-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+        .main-mult { font-size: 1.8rem; font-weight: bold; color: var(--accent); }
+        .formula { font-size: 0.65rem; color: #888; border-top: 1px solid #333; padding-top: 5px; overflow-x: auto; white-space: nowrap; }
+        .warning { font-size: 0.7rem; color: var(--bad); display: none; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>REIGN RELIC SIM v2.0</h1>
-    <div id="slots-container"></div>
+    <h2 style="text-align:center; color:var(--accent); font-size:1rem;">REIGN RELIC SIM v4.0</h2>
+    
+    <div id="normal-section">
+        <span class="label">通常遺物スロット (x3)</span>
+        <div id="n-slots"></div>
+    </div>
+
+    <div id="deep-section">
+        <span class="label deep">深層遺物スロット (x3)</span>
+        <div id="d-slots"></div>
+    </div>
 </div>
 
 <div class="result-bar">
-    <div class="res-row"><span>最終攻撃倍率</span><span id="total-mult" class="val">1.000x</span></div>
-    <div class="res-row"><span>最大HP/FP</span><span id="total-stats" style="font-size: 0.9rem; color:#ff6b6b;">HP: +0 / FP: +0</span></div>
-    <div id="formula-text" class="formula">式: 1.0</div>
+    <div class="val-row">
+        <span>最終倍率 <span id="dup-warn" class="warning">（⚠️重複無効あり）</span></span>
+        <span id="res-mult" class="main-mult">1.000x</span>
+    </div>
+    <div id="res-formula" class="formula">式: 1.0</div>
 </div>
 
 <script>
-// スプレッドシートから取得する場合はここをGASのURLにする
-const GAS_URL = ""; 
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyhVaCqUaUnggXNtatbVEsw6njwf1XCHZPcJh79s0WWJKvGNvIqCo9wIeetkTic5cbZ/exec"; 
 
-// サイト情報を整形した全データ（スプシがない場合のデフォルト）
-const relicDatabase = [
-    {n:"--- 未装備 ---", v:1.0, t:"mult"},
-    /* 通常攻撃系 */
-    {n:"物理攻撃力上昇+2 (+6%)", v:1.06, t:"mult"},
-    {n:"物理攻撃力上昇+1 (+5%)", v:1.05, t:"mult"},
-    {n:"物理攻撃力上昇+0 (+4%)", v:1.04, t:"mult"},
-    {n:"近接攻撃力上昇 (1.05倍)", v:1.05, t:"mult"},
-    {n:"戦技攻撃力上昇 (1.15倍)", v:1.15, t:"mult"},
-    {n:"通常攻撃1段目強化 (1.15倍)", v:1.15, t:"mult"},
-    /* 深層攻撃系 */
-    {n:"深層：物理上昇+4 (+12%)", v:1.12, t:"mult"},
-    {n:"深層：物理上昇+3 (+10.5%)", v:1.105, t:"mult"},
-    {n:"深層：魔術/祈祷強化+2 (+10%)", v:1.10, t:"mult"},
-    /* アイテム系 */
-    {n:"投擲壺/ナイフ強化 (1.15倍)", v:1.15, t:"mult"},
-    {n:"調香術強化 (1.14倍)", v:1.14, t:"mult"},
-    /* ステータス系 */
-    {n:"最大HP上昇 (+100)", v:100, t:"hp_add"},
-    {n:"最大FP上昇 (+25)", v:25, t:"fp_add"},
-    {n:"深層：最大HP上昇 (+10%)", v:1.10, t:"hp_mult"},
-    {n:"深層：最大FP上昇 (+15%)", v:1.15, t:"fp_mult"}
-];
+let relicMaster = { normal: [], deep: [] };
 
-function init() {
-    const container = document.getElementById('slots-container');
-    const categories = ["通常遺物 1", "通常遺物 2", "通常遺物 3", "深層遺物 1", "深層遺物 2", "深層遺物 3"];
+async function loadData() {
+    try {
+        const response = await fetch(GAS_URL);
+        relicMaster = await response.json();
+        buildUI();
+    } catch (e) {
+        alert("データの読み込みに失敗しました。GASのURLと公開設定を確認してください。");
+    }
+}
+
+function buildUI() {
+    const nArea = document.getElementById('n-slots');
+    const dArea = document.getElementById('d-slots');
     
-    categories.forEach((cat, idx) => {
-        const box = document.createElement('div');
-        box.className = 'slot-box';
-        box.innerHTML = `<span class="label">${cat}</span><select class="relic-select" id="slot-${idx}"></select>`;
-        container.appendChild(box);
-        
-        const sel = box.querySelector('select');
-        relicDatabase.forEach(r => {
-            const opt = document.createElement('option');
-            opt.value = r.v; opt.dataset.type = r.t; opt.textContent = r.n;
-            sel.appendChild(opt);
-        });
-        sel.addEventListener('change', calc);
+    for(let i=0; i<3; i++) createSlot(nArea, relicMaster.normal, "n");
+    for(let i=0; i<3; i++) createSlot(dArea, relicMaster.deep, "d");
+}
+
+function createSlot(parent, data, typePrefix) {
+    const box = document.createElement('div');
+    box.className = 'slot-box';
+    const sel = document.createElement('select');
+    sel.className = 'relic-sel';
+    
+    const def = document.createElement('option');
+    def.textContent = "--- 未装備 ---"; def.value = 1.0; def.dataset.stack = "◯";
+    sel.appendChild(def);
+
+    data.forEach(r => {
+        const opt = document.createElement('option');
+        // 数値を抽出 (例: 12% -> 1.12)
+        let val = 1.0;
+        const match = r.effect.match(/(\d+)(%|倍)/);
+        if(match) {
+            val = match[2] === "%" ? 1 + (match[1]/100) : parseFloat(match[1]);
+        }
+        opt.value = val;
+        opt.textContent = r.name;
+        opt.dataset.stack = r.stack;
+        opt.dataset.bad = r.bad || "";
+        opt.dataset.detail = r.effect;
+        sel.appendChild(opt);
     });
-    calc();
+
+    const info = document.createElement('div');
+    info.className = 'detail';
+    
+    sel.addEventListener('change', () => {
+        const o = sel.options[sel.selectedIndex];
+        let text = o.dataset.detail || "";
+        if(o.dataset.bad) text += ` <span class="bad-text"> / デメリット: ${o.dataset.bad}</span>`;
+        info.innerHTML = text;
+        calc();
+    });
+
+    box.appendChild(sel);
+    box.appendChild(info);
+    parent.appendChild(box);
 }
 
 function calc() {
-    let mult = 1.0;
-    let hp_add = 0; let hp_mult = 1.0;
-    let fp_add = 0; let fp_mult = 1.0;
+    let total = 1.0;
     let steps = [];
+    let usedNoStack = new Set();
+    let hasDup = false;
 
-    document.querySelectorAll('.relic-select').forEach(s => {
+    document.querySelectorAll('.relic-sel').forEach(s => {
         const opt = s.options[s.selectedIndex];
-        const v = parseFloat(opt.value);
-        const type = opt.dataset.type;
+        const val = parseFloat(opt.value);
+        const name = opt.textContent;
+        const canStack = opt.dataset.stack === "◯";
 
-        if (v === 1.0 && type === "mult") return;
+        if(name === "--- 未装備 ---") return;
 
-        if(type === "mult") { mult *= v; steps.push(v); }
-        else if(type === "hp_add") { hp_add += v; }
-        else if(type === "hp_mult") { hp_mult *= v; }
-        else if(type === "fp_add") { fp_add += v; }
-        else if(type === "fp_mult") { fp_mult *= v; }
+        if(!canStack) {
+            if(usedNoStack.has(name)) {
+                hasDup = true;
+                return; // 重複スキップ
+            }
+            usedNoStack.add(name);
+        }
+
+        total *= val;
+        steps.push(val);
     });
 
-    document.getElementById('total-mult').innerText = mult.toFixed(3) + "x";
-    document.getElementById('total-stats').innerText = `HP: +${hp_add} / ${hp_mult.toFixed(1)}倍 | FP: +${fp_add} / ${fp_mult.toFixed(1)}倍`;
-    document.getElementById('formula-text').innerText = "倍率式: " + (steps.length ? steps.join(" × ") : "1.0");
+    document.getElementById('res-mult').innerText = total.toFixed(3) + "x";
+    document.getElementById('res-formula').innerText = "式: " + (steps.length ? steps.join(" × ") : "1.0");
+    document.getElementById('dup-warn').style.display = hasDup ? "inline" : "none";
 }
 
-window.onload = init;
+loadData();
 </script>
 </body>
 </html>
