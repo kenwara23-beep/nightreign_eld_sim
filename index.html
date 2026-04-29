@@ -3,145 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ナイトレイン 遺物構成シミュレーター v4.0</title>
+    <title>ナイトレイン 遺物構成シミュレーター v5.0</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <style>
         :root { --bg: #0d0d0f; --card: #1c1c1e; --accent: #c1a35f; --deep: #6e40c9; --text: #f0f0f0; --bad: #ff4444; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
-        .container { max-width: 500px; margin: 0 auto; padding-bottom: 160px; }
-        .slot-box { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid #333; position: relative; }
-        .label { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin-bottom: 8px; display: block; }
-        .label.deep { color: #a371f7; }
-        select { width: 100%; height: 45px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; }
-        .detail { font-size: 0.7rem; color: #888; margin-top: -5px; margin-bottom: 5px; min-height: 1em; }
-        .bad-text { font-size: 0.7rem; color: var(--bad); font-weight: bold; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
+        .container { max-width: 500px; margin: 0 auto; padding-bottom: 180px; }
+        h1 { font-size: 1rem; text-align: center; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 8px; margin-top: 5px; }
         
-        .result-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 15, 20, 0.98); border-top: 2px solid var(--accent); padding: 15px; z-index: 100; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
-        .val-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+        .section-label { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin: 15px 0 8px 5px; display: block; border-left: 3px solid var(--accent); padding-left: 8px; }
+        .section-label.deep { color: #a371f7; border-left-color: #a371f7; }
+        
+        .slot-box { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid #333; }
+        select { width: 100%; height: 45px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 8px; font-size: 0.9rem; margin-bottom: 5px; }
+        
+        .detail-info { font-size: 0.7rem; color: #888; line-height: 1.4; min-height: 1em; }
+        .bad-label { color: var(--bad); font-weight: bold; }
+        
+        .cumul-box { display: flex; justify-content: space-between; align-items: center; background: #252527; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; }
+        input[type="number"] { width: 60px; height: 30px; background: #3a3a3c; color: white; border: 1px solid #555; border-radius: 4px; text-align: center; }
+
+        /* 下部固定リザルトバー */
+        .result-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 15, 20, 0.98); backdrop-filter: blur(10px); border-top: 2px solid var(--accent); padding: 15px; z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
+        .res-row { display: flex; justify-content: space-between; align-items: baseline; }
         .main-mult { font-size: 1.8rem; font-weight: bold; color: var(--accent); }
-        .formula { font-size: 0.65rem; color: #888; border-top: 1px solid #333; padding-top: 5px; overflow-x: auto; white-space: nowrap; }
-        .warning { font-size: 0.7rem; color: var(--bad); display: none; }
+        .sub-info { font-size: 0.75rem; color: #ff6b6b; font-weight: bold; }
+        .formula { font-size: 0.65rem; color: #888; border-top: 1px solid #333; padding-top: 6px; margin-top: 8px; overflow-x: auto; white-space: nowrap; }
+        .dup-warn { color: var(--bad); font-size: 0.7rem; display: none; margin-left: 10px; }
+
+        /* ローディングアニメーション */
+        #loader { text-align: center; padding: 50px; color: var(--accent); font-size: 0.9rem; }
     </style>
 </head>
 <body>
-<div class="container">
-    <h2 style="text-align:center; color:var(--accent); font-size:1rem;">REIGN RELIC SIM v4.0</h2>
-    
-    <div id="normal-section">
-        <span class="label">通常遺物スロット (x3)</span>
-        <div id="n-slots"></div>
-    </div>
 
-    <div id="deep-section">
-        <span class="label deep">深層遺物スロット (x3)</span>
+<div class="container" id="main-content">
+    <h1>REIGN RELIC SIM v5.0</h1>
+    <div id="loader">スプレッドシートからデータを読み込み中...</div>
+    
+    <div id="app-body" style="display:none;">
+        <span class="section-label">通常遺物スロット (x3)</span>
+        <div id="n-slots"></div>
+
+        <span class="section-label deep">深層遺物スロット (x3)</span>
         <div id="d-slots"></div>
+
+        <span class="section-label">累積・状況バフ</span>
+        <div class="section">
+            <div class="cumul-box">
+                <span>封牢の囚 撃破数 (1つにつき1.05倍)</span>
+                <input type="number" id="jail-count" value="0" min="0" max="10" class="calc-trigger">
+            </div>
+            <div class="cumul-box">
+                <span>夜の侵入者 撃破数 (1つにつき1.07倍)</span>
+                <input type="number" id="invader-count" value="0" min="0" max="10" class="calc-trigger">
+            </div>
+            <div class="cumul-box">
+                <span>連撃段階 (Lv3: 1.22倍 / Lv2: 1.12倍)</span>
+                <select id="combo-boost" class="calc-trigger" style="width:120px; height:30px; margin:0; font-size:0.75rem;">
+                    <option value="1.0">なし</option>
+                    <option value="1.12">連撃 Lv2</option>
+                    <option value="1.22">連撃 Lv3</option>
+                </select>
+            </div>
+        </div>
     </div>
 </div>
 
 <div class="result-bar">
-    <div class="val-row">
-        <span>最終倍率 <span id="dup-warn" class="warning">（⚠️重複無効あり）</span></span>
+    <div class="res-row">
+        <span>最終ダメージ倍率 <span id="dup-alert" class="dup-warn">⚠️重複無効</span></span>
         <span id="res-mult" class="main-mult">1.000x</span>
+    </div>
+    <div class="res-row">
+        <span id="res-percent" class="sub-info">+0.0% ダメージアップ</span>
     </div>
     <div id="res-formula" class="formula">式: 1.0</div>
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyhVaCqUaUnggXNtatbVEsw6njwf1XCHZPcJh79s0WWJKvGNvIqCo9wIeetkTic5cbZ/exec"; 
+// ご提示いただいたGAS URL
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxo63D25mvm9EVV0zoytBrKobuC6j4k5wI--nwgvi_rvkXJ_RhL9r2lyXYe8zhCvg2l/exec";
 
 let relicMaster = { normal: [], deep: [] };
 
 async function loadData() {
     try {
-        const response = await fetch(GAS_URL);
+        const response = await fetch(GAS_URL, { redirect: 'follow' });
+        if (!response.ok) throw new Error('Network error');
         relicMaster = await response.json();
+        
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('app-body').style.display = 'block';
+        
         buildUI();
     } catch (e) {
-        alert("データの読み込みに失敗しました。GASのURLと公開設定を確認してください。");
-    }
-}
-
-function buildUI() {
-    const nArea = document.getElementById('n-slots');
-    const dArea = document.getElementById('d-slots');
-    
-    for(let i=0; i<3; i++) createSlot(nArea, relicMaster.normal, "n");
-    for(let i=0; i<3; i++) createSlot(dArea, relicMaster.deep, "d");
-}
-
-function createSlot(parent, data, typePrefix) {
-    const box = document.createElement('div');
-    box.className = 'slot-box';
-    const sel = document.createElement('select');
-    sel.className = 'relic-sel';
-    
-    const def = document.createElement('option');
-    def.textContent = "--- 未装備 ---"; def.value = 1.0; def.dataset.stack = "◯";
-    sel.appendChild(def);
-
-    data.forEach(r => {
-        const opt = document.createElement('option');
-        // 数値を抽出 (例: 12% -> 1.12)
-        let val = 1.0;
-        const match = r.effect.match(/(\d+)(%|倍)/);
-        if(match) {
-            val = match[2] === "%" ? 1 + (match[1]/100) : parseFloat(match[1]);
-        }
-        opt.value = val;
-        opt.textContent = r.name;
-        opt.dataset.stack = r.stack;
-        opt.dataset.bad = r.bad || "";
-        opt.dataset.detail = r.effect;
-        sel.appendChild(opt);
-    });
-
-    const info = document.createElement('div');
-    info.className = 'detail';
-    
-    sel.addEventListener('change', () => {
-        const o = sel.options[sel.selectedIndex];
-        let text = o.dataset.detail || "";
-        if(o.dataset.bad) text += ` <span class="bad-text"> / デメリット: ${o.dataset.bad}</span>`;
-        info.innerHTML = text;
-        calc();
-    });
-
-    box.appendChild(sel);
-    box.appendChild(info);
-    parent.appendChild(box);
-}
-
-function calc() {
-    let total = 1.0;
-    let steps = [];
-    let usedNoStack = new Set();
-    let hasDup = false;
-
-    document.querySelectorAll('.relic-sel').forEach(s => {
-        const opt = s.options[s.selectedIndex];
-        const val = parseFloat(opt.value);
-        const name = opt.textContent;
-        const canStack = opt.dataset.stack === "◯";
-
-        if(name === "--- 未装備 ---") return;
-
-        if(!canStack) {
-            if(usedNoStack.has(name)) {
-                hasDup = true;
-                return; // 重複スキップ
-            }
-            usedNoStack.add(name);
-        }
-
-        total *= val;
-        steps.push(val);
-    });
-
-    document.getElementById('res-mult').innerText = total.toFixed(3) + "x";
-    document.getElementById('res-formula').innerText = "式: " + (steps.length ? steps.join(" × ") : "1.0");
-    document.getElementById('dup-warn').style.display = hasDup ? "inline" : "none";
-}
-
-loadData();
-</script>
-</body>
-</html>
+        console.error(e);
+        document.getElementById('loader').innerHTML = '<span
