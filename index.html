@@ -3,68 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ナイトレイン 遺物構成シミュレーター v5.0</title>
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>NR RELIC SIM v5.1</title>
     <style>
-        :root { --bg: #0d0d0f; --card: #1c1c1e; --accent: #c1a35f; --deep: #6e40c9; --text: #f0f0f0; --bad: #ff4444; }
+        :root { --bg: #0d0d0f; --card: #1c1c1e; --accent: #c1a35f; --deep: #8a2be2; --text: #f0f0f0; --bad: #ff4d4d; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
-        .container { max-width: 500px; margin: 0 auto; padding-bottom: 180px; }
-        h1 { font-size: 1rem; text-align: center; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 8px; margin-top: 5px; }
-        
-        .section-label { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin: 15px 0 8px 5px; display: block; border-left: 3px solid var(--accent); padding-left: 8px; }
-        .section-label.deep { color: #a371f7; border-left-color: #a371f7; }
-        
-        .slot-box { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid #333; }
-        select { width: 100%; height: 45px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 8px; font-size: 0.9rem; margin-bottom: 5px; }
-        
-        .detail-info { font-size: 0.7rem; color: #888; line-height: 1.4; min-height: 1em; }
+        .container { max-width: 480px; margin: 0 auto; padding-bottom: 160px; }
+        h1 { font-size: 1rem; text-align: center; color: var(--accent); margin: 5px 0 15px; letter-spacing: 2px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .section-title { font-size: 0.7rem; color: var(--accent); font-weight: bold; margin: 10px 0 5px 5px; display: block; }
+        .slot-box { background: var(--card); border-radius: 8px; padding: 10px; margin-bottom: 8px; border: 1px solid #333; }
+        select { width: 100%; height: 40px; background: #2c2c2e; color: white; border: 1px solid #444; border-radius: 5px; font-size: 0.85rem; }
+        .info { font-size: 0.65rem; color: #aaa; margin-top: 5px; display: flex; justify-content: space-between; }
         .bad-label { color: var(--bad); font-weight: bold; }
-        
-        .cumul-box { display: flex; justify-content: space-between; align-items: center; background: #252527; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; }
-        input[type="number"] { width: 60px; height: 30px; background: #3a3a3c; color: white; border: 1px solid #555; border-radius: 4px; text-align: center; }
-
-        /* 下部固定リザルトバー */
-        .result-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 15, 20, 0.98); backdrop-filter: blur(10px); border-top: 2px solid var(--accent); padding: 15px; z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
-        .res-row { display: flex; justify-content: space-between; align-items: baseline; }
-        .main-mult { font-size: 1.8rem; font-weight: bold; color: var(--accent); }
-        .sub-info { font-size: 0.75rem; color: #ff6b6b; font-weight: bold; }
-        .formula { font-size: 0.65rem; color: #888; border-top: 1px solid #333; padding-top: 6px; margin-top: 8px; overflow-x: auto; white-space: nowrap; }
-        .dup-warn { color: var(--bad); font-size: 0.7rem; display: none; margin-left: 10px; }
-
-        /* ローディングアニメーション */
-        #loader { text-align: center; padding: 50px; color: var(--accent); font-size: 0.9rem; }
+        .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .config-item { background: #252527; padding: 8px; border-radius: 6px; border: 1px solid #333; font-size: 0.7rem; }
+        .config-item input, .config-item select { width: 100%; height: 30px; background: #3a3a3c; border: 1px solid #555; color: white; border-radius: 4px; margin-top: 4px; }
+        .result-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 15, 20, 0.95); border-top: 2px solid var(--accent); padding: 12px 20px 25px; z-index: 1000; }
+        .res-main { display: flex; justify-content: space-between; align-items: center; }
+        .res-total { font-size: 2.2rem; font-weight: bold; color: var(--accent); }
+        .res-percent { font-size: 0.85rem; color: #ff5e5e; font-weight: bold; }
+        .res-formula { font-size: 0.6rem; color: #666; margin-top: 8px; border-top: 1px solid #333; padding-top: 5px; white-space: nowrap; overflow-x: auto; }
+        .dup-error { color: var(--bad); font-size: 0.65rem; display: none; }
     </style>
 </head>
 <body>
 
-<div class="container" id="main-content">
-    <h1>REIGN RELIC SIM v5.0</h1>
-    <div id="loader">スプレッドシートからデータを読み込み中...</div>
+<div class="container">
+    <h1>Relic Simulator</h1>
+    <div id="loading" style="text-align:center; margin-top:50px;">📡 Synchronizing Data...</div>
     
-    <div id="app-body" style="display:none;">
-        <span class="section-label">通常遺物スロット (x3)</span>
+    <div id="app-ui" style="display:none;">
+        <span class="section-title">NORMAL SLOTS</span>
         <div id="n-slots"></div>
-
-        <span class="section-label deep">深層遺物スロット (x3)</span>
+        <span class="section-title" style="color:#b19cd9;">DEEP SLOTS</span>
         <div id="d-slots"></div>
 
-        <span class="section-label">累積・状況バフ</span>
-        <div class="section">
-            <div class="cumul-box">
-                <span>封牢の囚 撃破数 (1つにつき1.05倍)</span>
-                <input type="number" id="jail-count" value="0" min="0" max="10" class="calc-trigger">
-            </div>
-            <div class="cumul-box">
-                <span>夜の侵入者 撃破数 (1つにつき1.07倍)</span>
-                <input type="number" id="invader-count" value="0" min="0" max="10" class="calc-trigger">
-            </div>
-            <div class="cumul-box">
-                <span>連撃段階 (Lv3: 1.22倍 / Lv2: 1.12倍)</span>
-                <select id="combo-boost" class="calc-trigger" style="width:120px; height:30px; margin:0; font-size:0.75rem;">
+        <span class="section-title">FIELD BUFFS</span>
+        <div class="config-grid">
+            <div class="config-item"><span>封牢撃破 (x1.05)</span><input type="number" id="jail" value="0" min="0" oninput="calculate()"></div>
+            <div class="config-item"><span>侵入撃破 (x1.07)</span><input type="number" id="invader" value="0" min="0" oninput="calculate()"></div>
+            <div class="config-item" style="grid-column: span 2;">
+                <span>状況バフ</span>
+                <select id="extra-buff" onchange="calculate()">
                     <option value="1.0">なし</option>
-                    <option value="1.12">連撃 Lv2</option>
-                    <option value="1.22">連撃 Lv3</option>
+                    <option value="1.12">連撃 Lv2 (1.12x)</option>
+                    <option value="1.22">連撃 Lv3 (1.22x)</option>
+                    <option value="1.45">状態異常時 (1.45x)</option>
+                    <option value="1.10">物理攻撃(通常) (1.10x)</option>
                 </select>
             </div>
         </div>
@@ -72,32 +58,113 @@
 </div>
 
 <div class="result-bar">
-    <div class="res-row">
-        <span>最終ダメージ倍率 <span id="dup-alert" class="dup-warn">⚠️重複無効</span></span>
-        <span id="res-mult" class="main-mult">1.000x</span>
+    <div class="res-main">
+        <div>
+            <span style="font-size:0.7rem; color:#888;">TOTAL MULTIPLIER</span><br>
+            <span id="res-percent" class="res-percent">+0.0%</span>
+            <span id="dup-msg" class="dup-error">⚠️重複無効</span>
+        </div>
+        <div id="res-total" class="res-total">1.000</div>
     </div>
-    <div class="res-row">
-        <span id="res-percent" class="sub-info">+0.0% ダメージアップ</span>
-    </div>
-    <div id="res-formula" class="formula">式: 1.0</div>
+    <div id="res-formula" class="res-formula">Formula: 1.0</div>
 </div>
 
 <script>
-// ご提示いただいたGAS URL
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxo63D25mvm9EVV0zoytBrKobuC6j4k5wI--nwgvi_rvkXJ_RhL9r2lyXYe8zhCvg2l/exec";
 
-let relicMaster = { normal: [], deep: [] };
+let masterData = { normal: [], deep: [] };
 
-async function loadData() {
+async function init() {
     try {
-        const response = await fetch(GAS_URL, { redirect: 'follow' });
-        if (!response.ok) throw new Error('Network error');
-        relicMaster = await response.json();
+        const res = await fetch(GAS_URL, { redirect: 'follow' });
+        masterData = await res.json();
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('app-ui').style.display = 'block';
         
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('app-body').style.display = 'block';
+        for(let i=0; i<3; i++) createSlot(document.getElementById('n-slots'), masterData.normal);
+        for(let i=0; i<3; i++) createSlot(document.getElementById('d-slots'), masterData.deep);
         
-        buildUI();
-    } catch (e) {
-        console.error(e);
-        document.getElementById('loader').innerHTML = '<span
+        calculate();
+    } catch(e) {
+        document.getElementById('loading').innerText = "❌ Connection Failed";
+    }
+}
+
+function createSlot(container, data) {
+    const box = document.createElement('div');
+    box.className = 'slot-box';
+    const sel = document.createElement('select');
+    sel.className = 'relic-sel';
+
+    sel.onchange = (e) => {
+        const opt = e.target.options[e.target.selectedIndex];
+        box.querySelector('.detail-text').innerText = opt.dataset.eff || "";
+        box.querySelector('.bad-text').innerText = opt.dataset.bad && opt.dataset.bad !== "undefined" ? " / " + opt.dataset.bad : "";
+        calculate();
+    };
+
+    sel.appendChild(new Option("--- EMPTY ---", "1.0"));
+    data.forEach(item => {
+        const opt = new Option(item.name, getVal(item.name, item.effect));
+        opt.dataset.stack = item.stack;
+        opt.dataset.eff = item.effect;
+        opt.dataset.bad = item.bad;
+        sel.appendChild(opt);
+    });
+
+    box.innerHTML = `<div class="info"><span class="detail-text"></span><span class="bad-text bad-label"></span></div>`;
+    box.prepend(sel);
+    container.appendChild(box);
+}
+
+// 文字列から倍率を抽出する強化ロジック
+function getVal(name, effect) {
+    // 物理上昇+4 などの特定のキーワードを優先
+    if(name.includes("+4")) return 1.12;
+    if(name.includes("+3")) return 1.105;
+    if(name.includes("+2")) return 1.06;
+    if(name.includes("+1")) return 1.05;
+    if(name.includes("+0")) return 1.04;
+    
+    const m = effect.match(/(\d+\.?\d*)(%|倍)/);
+    if(m) return m[2] === "%" ? 1 + (parseFloat(m[1])/100) : parseFloat(m[1]);
+    return 1.0;
+}
+
+function calculate() {
+    let total = 1.0;
+    let steps = [];
+    let seen = new Set();
+    let hasDup = false;
+
+    document.querySelectorAll('.relic-sel').forEach(sel => {
+        const opt = sel.options[sel.selectedIndex];
+        const val = parseFloat(opt.value);
+        if(opt.text.includes("---")) return;
+
+        if(opt.dataset.stack === "×") {
+            if(seen.has(opt.text)) { hasDup = true; return; }
+            seen.add(opt.text);
+        }
+        total *= val;
+        steps.push(val);
+    });
+
+    // 累積
+    const j = parseInt(document.getElementById('jail').value) || 0;
+    for(let i=0; i<j; i++){ total *= 1.05; steps.push(1.05); }
+    const v = parseInt(document.getElementById('invader').value) || 0;
+    for(let i=0; i<v; i++){ total *= 1.07; steps.push(1.07); }
+
+    const ex = parseFloat(document.getElementById('extra-buff').value);
+    if(ex > 1.0) { total *= ex; steps.push(ex); }
+
+    document.getElementById('res-total').innerText = total.toFixed(3);
+    document.getElementById('res-percent').innerText = "+" + ((total - 1)*100).toFixed(1) + "% UP";
+    document.getElementById('res-formula').innerText = "Exp: " + (steps.length ? steps.join(" × ") : "1.0");
+    document.getElementById('dup-msg').style.display = hasDup ? "inline" : "none";
+}
+init();
+</script>
+</body>
+</html>
